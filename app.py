@@ -22,6 +22,13 @@ create_db()
 
 @app.route('/')
 def home():
+    # Insertar registro de visita a la home
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO visitas DEFAULT VALUES")
+    conn.commit()
+    conn.close()
+
     return render_template('index.html')
 
 @app.route('/pdf')
