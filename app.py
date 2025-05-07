@@ -3,64 +3,65 @@ import sqlite3
 import os
 
 app = Flask(__name__)
-DB_PATH = '/tmp/visitas.db'  # Carpeta con permisos de escritura en Render
+
+DB_PATH = 'tmp/visitas.db'
 
 def create_db():
-    if not os.path.exists(DB_PATH):
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS visitas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ruta TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        conn.commit()
-        conn.close()
-
-create_db()
-
-@app.route('/')
-def home():
-    # Insertar registro de visita a la home
+    os.makedirs('data', exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO visitas (ruta) VALUES (?)", ('/main',))
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS visitas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            ip TEXT,
+            user_agent TEXT,
+            ruta TEXT,
+            referer TEXT
+        )
+    ''')
     conn.commit()
     conn.close()
 
+def registrar_visita(ruta):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        INSERT INTO visitas (timestamp, ip, user_agent, ruta, referer)
+        VALUES (?, ?, ?, ?, ?)
+        ''',
+        (
+            datetime.utcnow().isoformat(),
+            request.remote_addr,
+            request.headers.get('User-Agent'),
+            ruta,
+            request.headers.get('Referer')
+        )
+    )
+    conn.commit()
+    conn.close()
+
+@app.route('/')
+def index():
+    registrar_visita('/')
     return render_template('index.html')
 
 @app.route('/pdf')
 def redirect_pdf():
-    # Insertar registro de visita
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO visitas (ruta) VALUES (?)", ('/pdf',))
-    conn.commit()
-    conn.close()
-
+    registrar_visita('/pdf')
     return redirect("https://siemprefiel.es/")  # Aquí va la web a la que quieres redirigir
 
 
 @app.route('/stats')
+@app.route('/stats')
 def stats():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM visitas")
-    total = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT * FROM visitas ORDER BY timestamp DESC LIMIT 10")
+    cursor.execute("SELECT timestamp, ip, user_agent, ruta, referer FROM visitas ORDER BY timestamp DESC")
     visitas = cursor.fetchall()
     conn.close()
-
-    stats_html = f"<h1>Total visitas: {total}</h1><ul>"
-    for v in visitas:
-        stats_html += f"<li>{v}</li>"
-    stats_html += "</ul>"
-
-    return stats_html
+    return render_template('stats.html', visitas=visitas)
 
 if __name__ == "__main__":
     app.run(debug=True)
