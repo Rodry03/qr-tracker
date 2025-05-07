@@ -1,44 +1,56 @@
-from flask import Flask, request, redirect
+from flask import Flask, render_template, redirect, url_for
 import sqlite3
-from datetime import datetime
 import os
-
-# Directorio persistente en Render (se crea automáticamente en el entorno de Render)
-db_path = os.path.join(os.getcwd(), 'data', 'visitas.db')
-
 
 app = Flask(__name__)
 
-PDF_URL = "https://docs.google.com/spreadsheets/d/1zg8uJw3yE1akzoAIvISN5BKDCjrU6zgLTanvl7g84tI/edit?usp=sharing"  # <-- CAMBIA ESTO
+# Ruta para la página principal
+@app.route('/')
+def home():
+    return render_template('index.html')  # Renderiza el archivo index.html
 
-@app.route("/pdf")
-def redirigir_pdf():
-    ip = request.remote_addr
-    user_agent = request.headers.get("User-Agent", "unknown")
-    timestamp = datetime.utcnow().isoformat()
+# Ruta para redirigir a un PDF (en este caso, un archivo en Google Drive)
+@app.route('/pdf')
+def redirect_pdf():
+    # Redirige a un enlace de Google Drive (o cualquier otro enlace de un archivo PDF)
+    return redirect("https://docs.google.com/spreadsheets/d/1zg8uJw3yE1akzoAIvISN5BKDCjrU6zgLTanvl7g84tI/edit?usp=sharing")
 
-    try:
-        
-        # Asegúrate de que el directorio "data" existe
-        if not os.path.exists(os.path.dirname(db_path)):
-            os.makedirs(os.path.dirname(db_path))
+# Ruta para mostrar las estadísticas de visitas
+@app.route('/stats')
+def stats():
+    # Conectar a la base de datos SQLite para obtener las estadísticas
+    db_path = 'data/visitas.db'
+    if not os.path.exists(db_path):
+        return "Base de datos no encontrada", 500
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Consulta para contar las visitas
+    cursor.execute("SELECT COUNT(*) FROM visitas")
+    visitas_count = cursor.fetchone()[0]
+    
+    # Consulta para obtener detalles sobre las visitas (si es necesario)
+    cursor.execute("SELECT * FROM visitas LIMIT 10")  # Aquí puedes ajustar la consulta
+    visitas = cursor.fetchall()
+    
+    conn.close()
 
-        conn = sqlite3.connect(db_path)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS visitas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TEXT,
-                user_agent TEXT,
-                ip TEXT
-            )
-        """)
-        conn.execute(
-            "INSERT INTO visitas (timestamp, user_agent, ip) VALUES (?, ?, ?)",
-            (timestamp, user_agent, ip)
-        )
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        print("Error guardando visita:", e)
+    # Mostrar estadísticas (puedes personalizar este formato)
+    stats_html = f"""
+    <h1>Estadísticas de Visitas</h1>
+    <p>Total de visitas: {visitas_count}</p>
+    <h2>Últimas 10 visitas:</h2>
+    <ul>
+    """
+    
+    for visita in visitas:
+        stats_html += f"<li>{visita}</li>"  # Personaliza cómo mostrar la visita
+    
+    stats_html += "</ul>"
+    
+    return stats_html  # Muestra las estadísticas en formato HTML
 
-    return redirect(PDF_URL, code=302)
+# Inicia la aplicación
+if __name__ == "__main__":
+    app.run(debug=True)
