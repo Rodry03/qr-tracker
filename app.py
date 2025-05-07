@@ -1,10 +1,15 @@
-from flask import Flask, request, redirect, render_template_string
+from flask import Flask, request, redirect
 import sqlite3
 from datetime import datetime
+import os
+
+# Directorio persistente en Render (se crea automáticamente en el entorno de Render)
+db_path = os.path.join(os.getcwd(), 'data', 'visitas.db')
+
 
 app = Flask(__name__)
 
-PDF_URL = "https://docs.google.com/spreadsheets/d/1zg8uJw3yE1akzoAIvISN5BKDCjrU6zgLTanvl7g84tI/edit?usp=sharing"  # ← Cambia este enlace
+PDF_URL = "https://docs.google.com/spreadsheets/d/1zg8uJw3yE1akzoAIvISN5BKDCjrU6zgLTanvl7g84tI/edit?usp=sharing"  # <-- CAMBIA ESTO
 
 @app.route("/pdf")
 def redirigir_pdf():
@@ -13,7 +18,12 @@ def redirigir_pdf():
     timestamp = datetime.utcnow().isoformat()
 
     try:
-        conn = sqlite3.connect("visitas.db")
+        
+        # Asegúrate de que el directorio "data" existe
+        if not os.path.exists(os.path.dirname(db_path)):
+            os.makedirs(os.path.dirname(db_path))
+
+        conn = sqlite3.connect(db_path)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS visitas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,26 +42,3 @@ def redirigir_pdf():
         print("Error guardando visita:", e)
 
     return redirect(PDF_URL, code=302)
-
-@app.route("/stats")
-def mostrar_stats():
-    conn = sqlite3.connect("visitas.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT timestamp, ip, user_agent FROM visitas ORDER BY id DESC")
-    visitas = cursor.fetchall()
-    conn.close()
-
-    html_template = """
-    <h1>Visitas registradas</h1>
-    <table border="1" cellpadding="5">
-        <tr><th>Fecha</th><th>IP</th><th>User Agent</th></tr>
-        {% for v in visitas %}
-        <tr>
-            <td>{{ v[0] }}</td>
-            <td>{{ v[1] }}</td>
-            <td>{{ v[2] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    """
-    return render_template_string(html_template, visitas=visitas)
