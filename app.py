@@ -1,7 +1,25 @@
 from flask import Flask, render_template, redirect, url_for
 import sqlite3
 import os
+import sqlite3
 
+# Crear base de datos y tabla de visitas
+def create_db():
+    conn = sqlite3.connect('data/visitas.db')  # Asegúrate de que la carpeta 'data' exista
+    cursor = conn.cursor()
+
+    # Crear la tabla 'visitas'
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS visitas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    conn.commit()
+    conn.close()
+
+create_db()
 app = Flask(__name__)
 
 # Ruta para la página principal
