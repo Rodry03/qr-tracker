@@ -12,6 +12,7 @@ def create_db():
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS visitas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ruta TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -25,7 +26,7 @@ def home():
     # Insertar registro de visita a la home
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO visitas DEFAULT VALUES")
+    cursor.execute("INSERT INTO visitas (ruta) VALUES (?)", ('/main',))
     conn.commit()
     conn.close()
 
@@ -36,7 +37,7 @@ def redirect_pdf():
     # Insertar registro de visita
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO visitas DEFAULT VALUES")
+    cursor.execute("INSERT INTO visitas (ruta) VALUES (?)", ('/web',))
     conn.commit()
     conn.close()
     
