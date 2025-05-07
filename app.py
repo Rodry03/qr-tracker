@@ -37,11 +37,12 @@ def redirect_pdf():
     # Insertar registro de visita
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO visitas (ruta) VALUES (?)", ('/web',))
+    cursor.execute("INSERT INTO visitas (ruta) VALUES (?)", ('/pdf',))
     conn.commit()
     conn.close()
-    
-    return redirect("https://drive.google.com/file/d/TU_ID/view")
+
+    return redirect("https://siemprefiel.es/")  # Aquí va la web a la que quieres redirigir
+
 
 @app.route('/stats')
 def stats():
