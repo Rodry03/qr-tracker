@@ -4,7 +4,7 @@ import sqlite3
 import os
 
 app = Flask(__name__)
-create_db()
+
 
 DB_PATH = 'tmp/visitas.db'
 
@@ -67,3 +67,4 @@ def stats():
 
 if __name__ == "__main__":
     app.run(debug=True)
+    create_db()
