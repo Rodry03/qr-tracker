@@ -4,6 +4,7 @@ import sqlite3
 import os
 
 app = Flask(__name__)
+create_db()
 
 DB_PATH = 'tmp/visitas.db'
 
