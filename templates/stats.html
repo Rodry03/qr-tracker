@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Estadísticas</title>
+</head>
+<body>
+  <h1>Visitas</h1>
+  <table border="1">
+    <tr><th>Fecha</th><th>IP</th><th>User-Agent</th><th>Ruta</th><th>Referer</th></tr>
+    {% for v in visitas %}
+      <tr>
+        <td>{{ v[0] }}</td>
+        <td>{{ v[1] }}</td>
+        <td>{{ v[2] }}</td>
+        <td>{{ v[3] }}</td>
+        <td>{{ v[4] }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
