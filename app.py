@@ -29,6 +29,7 @@ app = Flask(__name__)
 create_db()
 
 def registrar_visita(ruta):
+    print("Registrando visita a:", ruta)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(
