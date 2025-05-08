@@ -3,7 +3,6 @@ from datetime import datetime
 import sqlite3
 import os
 
-app = Flask(__name__)
 
 
 DB_PATH = 'tmp/visitas.db'
@@ -24,6 +23,10 @@ def create_db():
     ''')
     conn.commit()
     conn.close()
+
+
+app = Flask(__name__)
+create_db()
 
 def registrar_visita(ruta):
     conn = sqlite3.connect(DB_PATH)
@@ -55,7 +58,6 @@ def redirect_pdf():
     return redirect("https://siemprefiel.es/")  # Aquí va la web a la que quieres redirigir
 
 
-@app.route('/stats')
 @app.route('/stats')
 def stats():
     conn = sqlite3.connect(DB_PATH)
